@@ -23,6 +23,9 @@ SOURCE_DIR = 'sample_data'
 RESULT_DIR = 'sample_result'
 
 logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 def main(photo_file):
   """Run a label request on a single image"""
@@ -31,12 +34,14 @@ def main(photo_file):
   service = discovery.build('vision', 'v1', credentials=credentials)
 
   src_path = os.path.join(SOURCE_DIR, photo_file)
-  dest_path = os.path.join(RESULT_DIR, photo_file, '.json')
+  dest_path = os.path.join(RESULT_DIR, "{}.{}".format(photo_file, 'json'))
 
   if os.path.exists(dest_path):
-    logging.info("{} already exists.".format(dest_path))
+    logger.info("{} already exists.".format(dest_path))
     with open(dest_path, 'rb') as f:
-      logging.info(f.read())
+      logger.info(f.read())
+
+    return
 
   with open(src_path, 'rb') as image:
     image_content = base64.b64encode(image.read())
@@ -52,7 +57,7 @@ def main(photo_file):
       }]
     })
     response = service_request.execute()
-    logging.info(response)
+    logger.info(response)
     with open(dest_path, 'wb') as f:
       f.write(json.dumps(response).encode())
 
