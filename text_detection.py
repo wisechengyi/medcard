@@ -38,10 +38,10 @@ def main(photo_file):
 
   if os.path.exists(dest_path):
     logger.info("{} already exists.".format(dest_path))
-    with open(dest_path, 'rb') as f:
-      logger.info(f.read())
-
-    return
+    with open(dest_path, 'r') as f:
+      response = json.load(f)
+      logger.info(response)
+    return response
 
   with open(src_path, 'rb') as image:
     image_content = base64.b64encode(image.read())
@@ -58,8 +58,8 @@ def main(photo_file):
     })
     response = service_request.execute()
     logger.info(response)
-    with open(dest_path, 'wb') as f:
-      f.write(json.dumps(response).encode())
+    with open(dest_path, 'w') as f:
+      f.write(json.dumps(response))
 
       # label = response['responses'][0]['labelAnnotations'][0]['description']
       # print('Found label: %s for %s' % (label, photo_file))
