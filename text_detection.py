@@ -73,12 +73,16 @@ if __name__ == '__main__':
   # args = parser.parse_args()
   for pic in os.listdir(SOURCE_DIR):
     # logger.info(pic)
-    response = compute_text('4.jpg')
+    response = compute_text('5.jpg')
     # logger.info(pformat(response))
     all_fields = response['responses'][0]['textAnnotations'][0]['description'].lower().splitlines()
     print(all_fields)
     alphabet_only = [''.join(i for i in x if i.isalpha()) for x in all_fields]
     print(alphabet_only)
-    print("rx bin candidate: {}".format(get_rx_bin_candidate(alphabet_only)))
+    idx, candidate = get_rx_bin_candidate(alphabet_only)
+    origin = all_fields[idx]
+    print("origin: {}".format(origin))
+    numbers = ''.join(x for x in origin if x.isdigit())
+    print("rx bin: {}".format(numbers))
     break
 
