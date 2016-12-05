@@ -7,11 +7,11 @@ KNOWN_WORDS = {'id', 'rxbin', 'rxgrp', 'issuer', 'first', 'last'}
 
 GROUP_RXBIN = {'rxbin', 'rx_bin', 'rx bin', 'bin', 'bin#'}
 GROUP_RXGRP = {'rxgrp', 'rx group', 'rx_grp', 'rxgroup'}
-
+GROUP_PCN = {'pcn'}
 
 def get_distance_to_group(word, group):
   min_distance = min(distance.sorensen(word, x) for x in group)
-  print(word, min_distance)
+  # print(word, min_distance)
   return min_distance
 
 
