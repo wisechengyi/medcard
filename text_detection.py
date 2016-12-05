@@ -16,6 +16,9 @@ import json
 import logging
 import os
 
+from correct import get_rx_bin_candidate
+
+from pprint import pformat
 from googleapiclient import discovery
 from oauth2client.client import GoogleCredentials
 
@@ -27,7 +30,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def main(photo_file):
+def compute_text(photo_file):
   """Run a label request on a single image"""
 
   credentials = GoogleCredentials.get_application_default()
@@ -40,7 +43,6 @@ def main(photo_file):
     logger.info("{} already exists.".format(dest_path))
     with open(dest_path, 'r') as f:
       response = json.load(f)
-      logger.info(response)
     return response
 
   with open(src_path, 'rb') as image:
@@ -57,9 +59,9 @@ def main(photo_file):
       }]
     })
     response = service_request.execute()
-    logger.info(response)
     with open(dest_path, 'w') as f:
       f.write(json.dumps(response))
+      return response
 
       # label = response['responses'][0]['labelAnnotations'][0]['description']
       # print('Found label: %s for %s' % (label, photo_file))
@@ -69,4 +71,14 @@ if __name__ == '__main__':
   # parser = argparse.ArgumentParser()
   # parser.add_argument('image_file', help='The image you\'d like to label.')
   # args = parser.parse_args()
-  main('1.jpg')
+  for pic in os.listdir(SOURCE_DIR):
+    # logger.info(pic)
+    response = compute_text('4.jpg')
+    # logger.info(pformat(response))
+    all_fields = response['responses'][0]['textAnnotations'][0]['description'].lower().splitlines()
+    print(all_fields)
+    alphabet_only = [''.join(i for i in x if i.isalpha()) for x in all_fields]
+    print(alphabet_only)
+    print("rx bin candidate: {}".format(get_rx_bin_candidate(alphabet_only)))
+    break
+
