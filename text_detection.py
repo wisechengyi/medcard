@@ -83,39 +83,58 @@ def get_value(group, original, expected_type):
 
   idx, field = min(enumerate(subfields), key=lambda x: get_distance_to_group(x[1], group))
 
+  if expected_type is int:
+    for f in subfields[idx:]:
+      try:
+        expected_type(f)
+        return f
+      except ValueError:
+        pass
+    return None
+  elif expected_type is str:
+    dist_field = get_distance_to_group(cleaned, group)
 
-  # dist_max = -1
-  # candidate = None
-  # for x, y in itertools.combinations(subfields, 2):
-  #   dist_y = get_distance_to_group(y, group)
-  #   dist_x = get_distance_to_group(x, group)
-  #   if dist_y - dist_x > dist_max:
-  #     dist_max = dist_y - dist_x
-  #     candidate =
+    dist_max = -1
+    # candidate = (field, value)
+    candidate = None
+    for i in range(len(subfields)):
+      left = ' '.join(subfields[:i])
+      right = ' '.join(subfields[i:])
+      if not left or not right:
+        continue
 
-  for f in subfields[idx:]:
-    try:
-      expected_type(f)
-      return f
-    except ValueError:
-      pass
+      dist_left = get_distance_to_group(left, group)
+      dist_right = get_distance_to_group(right, group)
 
-  return None
+      if dist_left >= dist_field and dist_right >= dist_field:
+        continue
 
-def get_neighbor_number(all_fields, original):
+      if abs(dist_left - dist_right) > dist_max:
+        dist_max = abs(dist_left - dist_right)
+        if dist_left > dist_right:
+          candidate = (right, left)
+        else:
+          candidate = (left, right)
+
+    if candidate:
+      return expected_type(candidate[1])
+    else:
+      return None
+
+
+def get_neighbor_value(all_fields, original, expected_type, exclude=[]):
   num_str = None
   for offset in [1, -1]:
     try:
       num_str = all_fields[all_fields.index(original) + offset]
-      int(num_str)
+      typed_numstr = expected_type(num_str)
+      if typed_numstr in exclude:
+        continue
     except (ValueError, IndexError):
       pass
     else:
-      break
-  else:
-    return None
+      return num_str
 
-  return num_str
 
 
 def find_rxbin(fields):
@@ -128,33 +147,37 @@ def find_rxbin(fields):
   numbers = ''.join(x for x in line_of_interest if x.isdigit())
   number = get_value(GROUP_RXBIN, line_of_interest, int)
   if number:
-    print("rx bin: {}".format(number))
+    # print("rx bin: {}".format(number))
     rxbin = number
   else:
     # try to find the closest number
-    rxbin = get_neighbor_number(fields, line_of_interest)
-    print("rxbin by proximity: {}".format(rxbin))
+    rxbin = get_neighbor_value(fields, line_of_interest, int)
+    # print("rxbin by proximity: {}".format(rxbin))
 
   return rxbin
 
-    # break
+  # break
 
-def find_member_id(fields):
-  alphabet_only = [''.join(i if i.isalpha() else ' ' for i in x ).strip() for x in fields]
-  idx, candidate = get_candidate(filter(lambda x: len(x) > 1, alphabet_only), GROUP_ID)
+
+def find_member_id(fields, exclude=[]):
+  alphabet_only = [''.join(i if i.isalpha() else ' ' for i in x).strip() for x in fields]
+  idx, candidate = get_candidate(alphabet_only, GROUP_ID)
+  if get_distance_to_group(candidate, GROUP_ID) >= 2:
+    return None
   print(candidate)
   line_of_interest = fields[idx]
   # print("origin: {}".format(line_of_interest))
   number = get_value(GROUP_ID, line_of_interest, str)
   if number:
     print("id: {}".format(number))
-    rxbin = number
+    member_id = number
   else:
     # try to find the closest number
-    rxbin = get_neighbor_number(fields, line_of_interest)
-    print("id by proximity: {}".format(rxbin))
+    member_id = get_neighbor_value(fields, line_of_interest, str, exclude=exclude)
+    print("id by proximity: {}".format(member_id))
 
-  return rxbin
+  return member_id
+
 
 if __name__ == '__main__':
   # parser = argparse.ArgumentParser()
@@ -163,11 +186,11 @@ if __name__ == '__main__':
   for pic in sorted(os.listdir(SOURCE_DIR), key=lambda x: int(x.split('.')[0])):
     # logger.info(pic)
     # response = compute_text('12.png')
-    # pic = '7.png'
-    print(pic)
+    # pic = '3.jpg'
     response = compute_text(pic)
     # logger.info(pformat(response))
     all_fields = response['responses'][0]['textAnnotations'][0]['description'].lower().splitlines()
-    # find_rxbin(all_fields)
-    find_member_id(all_fields)
+    rxbin = find_rxbin(all_fields)
+    member_id = find_member_id(all_fields, exclude=[str(rxbin)])
+    logger.info("{} id: {}".format(pic, member_id))
     # break
