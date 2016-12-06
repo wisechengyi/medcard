@@ -16,7 +16,9 @@ import json
 import logging
 import os
 
-from correct import get_rx_bin_candidate, get_distance_to_group, GROUP_RXBIN
+import itertools
+
+from detection import get_candidate, get_distance_to_group, GROUP_RXBIN, GROUP_ID
 
 from pprint import pformat
 from googleapiclient import discovery
@@ -67,7 +69,7 @@ def compute_text(photo_file):
       # print('Found label: %s for %s' % (label, photo_file))
 
 
-def get_number(group, original):
+def get_value(group, original, expected_type):
   """
   Find the number given key and value are contained in the same original string.
   """
@@ -80,9 +82,20 @@ def get_number(group, original):
     return None
 
   idx, field = min(enumerate(subfields), key=lambda x: get_distance_to_group(x[1], group))
+
+
+  # dist_max = -1
+  # candidate = None
+  # for x, y in itertools.combinations(subfields, 2):
+  #   dist_y = get_distance_to_group(y, group)
+  #   dist_x = get_distance_to_group(x, group)
+  #   if dist_y - dist_x > dist_max:
+  #     dist_max = dist_y - dist_x
+  #     candidate =
+
   for f in subfields[idx:]:
     try:
-      int(f)
+      expected_type(f)
       return f
     except ValueError:
       pass
@@ -109,19 +122,39 @@ def find_rxbin(fields):
   # print(all_fields)
   alphabet_only = [''.join(i for i in x if i.isalpha()) for x in fields]
   # print(alphabet_only)
-  idx, candidate = get_rx_bin_candidate(alphabet_only)
+  idx, candidate = get_candidate(alphabet_only, GROUP_RXBIN)
   line_of_interest = fields[idx]
   # print("origin: {}".format(line_of_interest))
   numbers = ''.join(x for x in line_of_interest if x.isdigit())
-  number = get_number(GROUP_RXBIN, line_of_interest)
+  number = get_value(GROUP_RXBIN, line_of_interest, int)
   if number:
-    print("{} rx bin: {}".format(pic, number))
+    print("rx bin: {}".format(number))
+    rxbin = number
   else:
     # try to find the closest number
-    print("{} rxbin by proximity: {}".format(pic, get_neighbor_number(fields, line_of_interest)))
+    rxbin = get_neighbor_number(fields, line_of_interest)
+    print("rxbin by proximity: {}".format(rxbin))
+
+  return rxbin
 
     # break
 
+def find_member_id(fields):
+  alphabet_only = [''.join(i if i.isalpha() else ' ' for i in x ).strip() for x in fields]
+  idx, candidate = get_candidate(filter(lambda x: len(x) > 1, alphabet_only), GROUP_ID)
+  print(candidate)
+  line_of_interest = fields[idx]
+  # print("origin: {}".format(line_of_interest))
+  number = get_value(GROUP_ID, line_of_interest, str)
+  if number:
+    print("id: {}".format(number))
+    rxbin = number
+  else:
+    # try to find the closest number
+    rxbin = get_neighbor_number(fields, line_of_interest)
+    print("id by proximity: {}".format(rxbin))
+
+  return rxbin
 
 if __name__ == '__main__':
   # parser = argparse.ArgumentParser()
@@ -130,9 +163,11 @@ if __name__ == '__main__':
   for pic in sorted(os.listdir(SOURCE_DIR), key=lambda x: int(x.split('.')[0])):
     # logger.info(pic)
     # response = compute_text('12.png')
-    # pic = '3.jpg'
+    # pic = '7.png'
+    print(pic)
     response = compute_text(pic)
     # logger.info(pformat(response))
     all_fields = response['responses'][0]['textAnnotations'][0]['description'].lower().splitlines()
-    find_rxbin(all_fields)
-
+    # find_rxbin(all_fields)
+    find_member_id(all_fields)
+    # break
