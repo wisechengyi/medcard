@@ -1,12 +1,8 @@
 import distance
 
-KNOWN_WORDS = {'id', 'rxbin', 'rxgrp', 'issuer', 'first', 'last'}
-
-# for w in KNOWN_WORDS:
-#   print(distance.levenshtein(w, 'rx_bin'))
-
 GROUP_RXBIN = {'rxbin', 'rx_bin', 'rx bin', 'bin', 'bin#'}
 GROUP_RXGRP = {'rxgrp', 'rx group', 'rx_grp', 'rxgroup'}
+GROUP_ID = {'enrollee id', 'member id', 'id', 'id number', 'identification #', 'member id #', 'member id number'}
 GROUP_PCN = {'pcn'}
 
 def get_distance_to_group(word, group):

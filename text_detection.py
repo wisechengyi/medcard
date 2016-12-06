@@ -105,32 +105,34 @@ def get_neighbor_number(all_fields, original):
   return num_str
 
 
+def find_rxbin(fields):
+  # print(all_fields)
+  alphabet_only = [''.join(i for i in x if i.isalpha()) for x in fields]
+  # print(alphabet_only)
+  idx, candidate = get_rx_bin_candidate(alphabet_only)
+  line_of_interest = fields[idx]
+  # print("origin: {}".format(line_of_interest))
+  numbers = ''.join(x for x in line_of_interest if x.isdigit())
+  number = get_number(GROUP_RXBIN, line_of_interest)
+  if number:
+    print("{} rx bin: {}".format(pic, number))
+  else:
+    # try to find the closest number
+    print("{} rxbin by proximity: {}".format(pic, get_neighbor_number(fields, line_of_interest)))
+
+    # break
+
 
 if __name__ == '__main__':
   # parser = argparse.ArgumentParser()
   # parser.add_argument('image_file', help='The image you\'d like to label.')
   # args = parser.parse_args()
-  for pic in os.listdir(SOURCE_DIR):
+  for pic in sorted(os.listdir(SOURCE_DIR), key=lambda x: int(x.split('.')[0])):
     # logger.info(pic)
     # response = compute_text('12.png')
     # pic = '3.jpg'
     response = compute_text(pic)
     # logger.info(pformat(response))
     all_fields = response['responses'][0]['textAnnotations'][0]['description'].lower().splitlines()
-    # print(all_fields)
-    alphabet_only = [''.join(i for i in x if i.isalpha()) for x in all_fields]
-    # print(alphabet_only)
-    idx, candidate = get_rx_bin_candidate(alphabet_only)
-    line_of_interest = all_fields[idx]
-    # print("origin: {}".format(line_of_interest))
-    numbers = ''.join(x for x in line_of_interest if x.isdigit())
-
-    number = get_number(GROUP_RXBIN, line_of_interest)
-    if number:
-      print("{} rx bin: {}".format(pic, number))
-    else:
-      # try to find the closest number
-      print("{} rxbin by proximity: {}".format(pic, get_neighbor_number(all_fields, line_of_interest)))
-
-    # break
+    find_rxbin(all_fields)
 
