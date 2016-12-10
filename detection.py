@@ -6,11 +6,12 @@ GROUP_ID = {'enrollee id', 'member id', 'id', 'id number', 'identification', 'me
             'subscriber id'}
 GROUP_PCN = {'pcn'}
 
+METHOD = distance.sorensen
 
 def get_distance_to_group(word, group):
   if not word:
     return 9999
-  min_distance = min(distance.levenshtein(word, x) for x in group)
+  min_distance = min(METHOD(word, x) for x in group)
   # print(word, min_distance)
   return min_distance
 

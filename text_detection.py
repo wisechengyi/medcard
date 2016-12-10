@@ -18,11 +18,15 @@ import os
 
 import itertools
 
+import distance
+
 from detection import get_candidate, get_distance_to_group, GROUP_RXBIN, GROUP_ID
 
 from pprint import pformat
 from googleapiclient import discovery
 from oauth2client.client import GoogleCredentials
+
+from graph import Graph
 
 SOURCE_DIR = 'sample_data'
 RESULT_DIR = 'sample_result'
@@ -38,7 +42,7 @@ def compute_text(photo_file):
   credentials = GoogleCredentials.get_application_default()
   service = discovery.build('vision', 'v1', credentials=credentials)
 
-  src_path = os.path.join(SOURCE_DIR, photo_file)
+  src_path = get_src_path(photo_file)
   dest_path = os.path.join(RESULT_DIR, "{}.{}".format(photo_file, 'json'))
 
   if os.path.exists(dest_path):
@@ -69,6 +73,10 @@ def compute_text(photo_file):
       # print('Found label: %s for %s' % (label, photo_file))
 
 
+def get_src_path(photo_file):
+  return os.path.join(SOURCE_DIR, photo_file)
+
+
 def get_value(group, original, expected_type):
   """
   Find the number given key and value are contained in the same original string.
@@ -91,6 +99,7 @@ def get_value(group, original, expected_type):
       except ValueError:
         pass
     return None
+
   elif expected_type is str:
     dist_field = get_distance_to_group(cleaned, group)
 
@@ -185,12 +194,19 @@ if __name__ == '__main__':
   # args = parser.parse_args()
   for pic in sorted(os.listdir(SOURCE_DIR), key=lambda x: int(x.split('.')[0])):
     # logger.info(pic)
-    # response = compute_text('12.png')
-    # pic = '3.jpg'
+    pic = '1.jpg'
     response = compute_text(pic)
     # logger.info(pformat(response))
     all_fields = response['responses'][0]['textAnnotations'][0]['description'].lower().splitlines()
+    g = Graph(get_src_path(pic), response['responses'][0]['textAnnotations'][1:])
     rxbin = find_rxbin(all_fields)
-    member_id = find_member_id(all_fields, exclude=[str(rxbin)])
-    logger.info("{} id: {}".format(pic, member_id))
-    # break
+
+    METHOD = distance.sorensen
+    member_id_a = find_member_id(all_fields, exclude=[str(rxbin)])
+    METHOD = distance.levenshtein
+    member_id_b = find_member_id(all_fields, exclude=[str(rxbin)])
+    if member_id_a == member_id_b:
+      logger.info("{} id: {}".format(pic, member_id_a))
+    else:
+      logger.info("{} id: {}".format(pic, None))
+    break
