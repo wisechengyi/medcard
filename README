@@ -1,7 +1,7 @@
-```
 virtualenv -p python3.5 venv  # should be okay >=2.7
 source venv/bin/activate
 pip install -r requirement.txt
 
 GOOGLE_APPLICATION_CREDENTIALS=<credential>.json python text_detection.py
-```
+
+Credential can be generated at https://console.developers.google.com/apis/credentials
