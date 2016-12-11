@@ -3,6 +3,7 @@ import numpy
 import numpy as np
 from PIL import Image
 from PIL import ImageDraw
+from scipy.spatial.distance import pdist, cdist
 
 
 class Graph:
@@ -25,7 +26,7 @@ class Node:
   def __init__(self, draw, annotation):
     self.description = annotation['description']
     self.vertices = annotation['boundingPoly']['vertices']
-    xy = self.get_xys(self.vertices)
+    xy = self.get_xys()
     draw.line(xy, fill=128)
     # self.center = numpy.array((int(np.mean([v[0] for v in xy])), int(np.mean([v[1] for v in xy]))))
     self.center = numpy.array([xy[0][0], xy[0][1]])
@@ -40,7 +41,8 @@ class Node:
           or (self.center[1] - node.get_center()[1]) / height > .03:
         continue
 
-      candidates.append((node, numpy.linalg.norm(self.center - node.center)))
+
+      candidates.append((node, self.get_min_distance(node)))
 
     sorted_candidates = sorted(candidates, key=lambda x: x[1])
     self.children = list(map(lambda x: x[0], sorted_candidates[:2]))
@@ -48,8 +50,9 @@ class Node:
       for child in self.children:
         draw.line(list(map(tuple, [self.center, child.get_center()])), fill=0)
 
-
-        # o = min(enumerate(candidates), key=lambda x: numpy.linalg.norm(x[1].center, self.center))
+  def get_min_distance(self, other_node):
+    m = cdist(self.get_xys(), other_node.get_xys(), p=2)
+    return m.min()
 
   def get_center(self):
     return self.center
@@ -61,9 +64,8 @@ class Node:
       s = "{} child: {}".format(s, child.description)
     return s
 
-  @staticmethod
-  def get_xys(vertices):
+  def get_xys(self):
     """
     :return: a list of (x,y) tuples: [(x,y),...]
     """
-    return list((d['x'], d['y']) for d in vertices if 'x' in d and 'y' in d)
+    return list((d['x'], d['y']) for d in self.vertices if 'x' in d and 'y' in d)
