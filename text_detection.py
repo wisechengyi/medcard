@@ -171,7 +171,7 @@ def find_rxbin(fields):
 def find_member_id(fields, graph, exclude=[]):
   alphabet_only = [''.join(i if i.isalpha() else ' ' for i in x).strip() for x in fields]
   idx, candidate = get_candidate(alphabet_only, GROUP_ID)
-  if get_distance_to_group(candidate, GROUP_ID) >= 2:
+  if get_distance_to_group(candidate, GROUP_ID) >= .2:
     return None
   logger.debug("candidate: {}".format(candidate))
   line_of_interest = fields[idx]
@@ -206,7 +206,7 @@ if __name__ == '__main__':
     # if not ('jpg' in filename or 'png' in filename):
     #   continue
     # logger.info(pic)
-    # pic = '16.png'
+    # pic = '3.jpg'
     response = compute_text(pic)
     # logger.info(pformat(response))
     all_fields = response['responses'][0]['textAnnotations'][0]['description'].lower().splitlines()
@@ -217,8 +217,6 @@ if __name__ == '__main__':
       continue
 
     rxbin = find_rxbin(all_fields)
-
-    METHOD = distance.sorensen
     id = find_member_id(all_fields, g, exclude=[str(rxbin)])
     print("{}\t id: {}, rxbin: {}".format(pic, id, rxbin))
 
