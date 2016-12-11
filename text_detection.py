@@ -220,6 +220,6 @@ if __name__ == '__main__':
 
     METHOD = distance.sorensen
     id = find_member_id(all_fields, g, exclude=[str(rxbin)])
-    print("{} id: {}, rxbin: {}".format(pic, id, rxbin))
+    print("{}\t id: {}, rxbin: {}".format(pic, id, rxbin))
 
     # break
