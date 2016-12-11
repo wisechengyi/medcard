@@ -168,7 +168,7 @@ def find_rxbin(fields):
   # break
 
 
-def find_member_id(fields, graph, exclude=[]):
+def find_member_id(fields, graph):
   alphabet_only = [''.join(i if i.isalpha() else ' ' for i in x).strip() for x in fields]
   idx, candidate = get_candidate(alphabet_only, GROUP_ID)
   if get_distance_to_group(candidate, GROUP_ID) >= .2:
@@ -217,7 +217,7 @@ if __name__ == '__main__':
       continue
 
     rxbin = find_rxbin(all_fields)
-    id = find_member_id(all_fields, g, exclude=[str(rxbin)])
+    id = find_member_id(all_fields, g)
     print("{}\t id: {}, rxbin: {}".format(pic, id, rxbin))
 
     # break
