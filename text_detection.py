@@ -168,22 +168,29 @@ def find_rxbin(fields):
   # break
 
 
-def find_member_id(fields, exclude=[]):
+def find_member_id(fields, graph, exclude=[]):
   alphabet_only = [''.join(i if i.isalpha() else ' ' for i in x).strip() for x in fields]
   idx, candidate = get_candidate(alphabet_only, GROUP_ID)
   if get_distance_to_group(candidate, GROUP_ID) >= 2:
     return None
-  print(candidate)
+  logger.debug("candidate: {}".format(candidate))
   line_of_interest = fields[idx]
   # print("origin: {}".format(line_of_interest))
   number = get_value(GROUP_ID, line_of_interest, str)
   if number:
-    print("id: {}".format(number))
+    logger.debug("id: {}".format(number))
     member_id = number
   else:
+    segment = graph.query(line_of_interest)
+    if not segment:
+      return None
     # try to find the closest number
-    member_id = get_neighbor_value(fields, line_of_interest, str, exclude=exclude)
-    print("id by proximity: {}".format(member_id))
+    # member_id = get_neighbor_value(fields, line_of_interest, str, exclude=exclude)
+    value_line = list(filter(lambda x: segment in x, fields))
+    if len(value_line) != 1:
+      return None
+    member_id = value_line[0]
+    logger.debug("id by proximity: {}".format(member_id))
 
   return member_id
 
@@ -192,21 +199,27 @@ if __name__ == '__main__':
   # parser = argparse.ArgumentParser()
   # parser.add_argument('image_file', help='The image you\'d like to label.')
   # args = parser.parse_args()
+  ds_store = os.path.join(SOURCE_DIR, '.DS_Store')
+  if os.path.exists(ds_store):
+    os.remove(ds_store)
   for pic in sorted(os.listdir(SOURCE_DIR), key=lambda x: int(x.split('.')[0])):
+    # if not ('jpg' in filename or 'png' in filename):
+    #   continue
     # logger.info(pic)
-    pic = '1.jpg'
+    # pic = '16.png'
     response = compute_text(pic)
     # logger.info(pformat(response))
     all_fields = response['responses'][0]['textAnnotations'][0]['description'].lower().splitlines()
-    g = Graph(get_src_path(pic), response['responses'][0]['textAnnotations'][1:])
+    try:
+      g = Graph(get_src_path(pic), response['responses'][0]['textAnnotations'][1:])
+    except ValueError as e:
+      logger.error(e)
+      continue
+
     rxbin = find_rxbin(all_fields)
 
     METHOD = distance.sorensen
-    member_id_a = find_member_id(all_fields, exclude=[str(rxbin)])
-    METHOD = distance.levenshtein
-    member_id_b = find_member_id(all_fields, exclude=[str(rxbin)])
-    if member_id_a == member_id_b:
-      logger.info("{} id: {}".format(pic, member_id_a))
-    else:
-      logger.info("{} id: {}".format(pic, None))
-    break
+    id = find_member_id(all_fields, g, exclude=[str(rxbin)])
+    print("{} id: {}, rxbin: {}".format(pic, id, rxbin))
+
+    # break
