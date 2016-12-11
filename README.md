@@ -1,11 +1,15 @@
-# medcard is an experimental program to extract information from images of common medical insurance cards.
+# medcard
+
+
+medcard is an experimental program to extract information from images of common medical insurance cards.
 
 ## Setup
 
+```
 virtualenv -p python3.5 venv  # Python2.7 should be okay as well
 source venv/bin/activate
 pip install -r requirement.txt
-
+```
 Credential file can be generated at https://console.developers.google.com/apis/credentials
 
 ## Example Run
